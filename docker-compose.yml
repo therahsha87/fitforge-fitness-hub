@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # FitForge Fitness Hub Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fitforge-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://fitforge:fitforge_password@postgres:5432/fitforge_db
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-production-jwt-secret-here
+      - NEXT_TELEMETRY_DISABLED=1
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - fitforge-network
+    volumes:
+      - ./logs:/app/logs
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: fitforge-postgres
+    environment:
+      - POSTGRES_DB=fitforge_db
+      - POSTGRES_USER=fitforge
+      - POSTGRES_PASSWORD=fitforge_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - fitforge-network
+
+  # Redis for Caching and Sessions
+  redis:
+    image: redis:7-alpine
+    container_name: fitforge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - fitforge-network
+    command: redis-server --appendonly yes
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: fitforge-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - fitforge-network
+
+  # Health Check Service
+  healthcheck:
+    image: curlimages/curl
+    container_name: fitforge-healthcheck
+    depends_on:
+      - app
+    restart: "no"
+    networks:
+      - fitforge-network
+    command: |
+      sh -c "
+        echo 'Waiting for app to be ready...'
+        sleep 30
+        curl -f http://app:3000/api/health || exit 1
+        echo 'Health check passed!'
+      "
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  fitforge-network:
+    driver: bridge
+
+# Development override (use with docker-compose -f docker-compose.yml -f docker-compose.dev.yml up)
+# Create docker-compose.dev.yml for development-specific configurations
