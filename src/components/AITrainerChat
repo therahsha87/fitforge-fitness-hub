@@ -1,0 +1,416 @@
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { 
+  MessageCircle, 
+  Send, 
+  Bot, 
+  User, 
+  Dumbbell, 
+  ChefHat, 
+  Target,
+  Flame,
+  Zap,
+  Shield
+} from 'lucide-react'
+
+interface Message {
+  id: string
+  type: 'user' | 'ai'
+  content: string
+  timestamp: Date
+  category?: 'workout' | 'nutrition' | 'recovery' | 'motivation'
+}
+
+interface AITrainerState {
+  mode: 'trainer' | 'nutritionist'
+  specialization: string
+  isTyping: boolean
+}
+
+export function AITrainerChat() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      type: 'ai',
+      content: "🔥 Welcome to your personal FitForge AI Coach! I'm here to help you forge your strongest self. Whether you need workout guidance, nutrition advice, or motivation to keep your fitness fire burning, I've got you covered! What would you like to work on today?",
+      timestamp: new Date(),
+      category: 'motivation'
+    }
+  ])
+  
+  const [inputMessage, setInputMessage] = useState('')
+  const [aiState, setAiState] = useState<AITrainerState>({
+    mode: 'trainer',
+    specialization: 'General Fitness Coach',
+    isTyping: false
+  })
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: inputMessage.trim(),
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, userMessage])
+    setInputMessage('')
+    setAiState(prev => ({ ...prev, isTyping: true }))
+
+    // Simulate AI response with fitness-forge themed responses
+    setTimeout(() => {
+      const aiResponse = generateFitnessForgeResponse(userMessage.content)
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        content: aiResponse.content,
+        timestamp: new Date(),
+        category: aiResponse.category
+      }
+      
+      setMessages(prev => [...prev, aiMessage])
+      setAiState(prev => ({ ...prev, isTyping: false }))
+    }, 1000 + Math.random() * 2000)
+  }
+
+  const generateFitnessForgeResponse = (userInput: string): { content: string; category: Message['category'] } => {
+    const lowerInput = userInput.toLowerCase()
+    
+    // Workout-related responses
+    if (lowerInput.includes('workout') || lowerInput.includes('exercise') || lowerInput.includes('train')) {
+      const workoutResponses = [
+        "🔥 Time to heat up your fitness forge! I recommend starting with compound movements like squats, deadlifts, and bench press. These are the 'raw materials' that build real strength. What's your current fitness level?",
+        "⚒️ Let's craft a legendary workout! For muscle building, focus on 8-12 reps with progressive overload. Think of each rep as a hammer strike - consistency and form forge the strongest results!",
+        "🏋️ Your forge needs fuel! Try this circuit: 10 push-ups, 15 squats, 20 mountain climbers, 30-second plank. Repeat 4 times. Each round heats up your fitness fire!",
+        "💪 Ready to forge some serious gains? Progressive overload is key - gradually increase weight, reps, or time. Your muscles adapt like metal in the forge - constant pressure creates strength!"
+      ]
+      return {
+        content: workoutResponses[Math.floor(Math.random() * workoutResponses.length)],
+        category: 'workout'
+      }
+    }
+    
+    // Nutrition-related responses
+    if (lowerInput.includes('nutrition') || lowerInput.includes('diet') || lowerInput.includes('food') || lowerInput.includes('eat')) {
+      const nutritionResponses = [
+        "🥗 Nutrition is the fuel for your fitness forge! Aim for 1g protein per lb bodyweight, complex carbs for energy, and healthy fats. Think of protein as your building blocks - you can't forge muscle without raw materials!",
+        "🍎 Let's optimize your forge fuel! Eat 5-6 small meals throughout the day to keep your metabolic fire burning. Include lean proteins, colorful vegetables, and whole grains at each meal.",
+        "🥛 Post-workout nutrition is crucial! Within 30 minutes, consume protein (like whey) and carbs to repair and rebuild. It's like quenching hot metal - timing matters for optimal results!",
+        "🔥 Hydration keeps your forge running smoothly! Aim for half your body weight in ounces of water daily. Add electrolytes during intense training sessions."
+      ]
+      return {
+        content: nutritionResponses[Math.floor(Math.random() * nutritionResponses.length)],
+        category: 'nutrition'
+      }
+    }
+    
+    // Recovery-related responses
+    if (lowerInput.includes('rest') || lowerInput.includes('sleep') || lowerInput.includes('recover') || lowerInput.includes('sore')) {
+      const recoveryResponses = [
+        "😴 Recovery is when the real forging happens! Your muscles grow during rest, not just during workouts. Aim for 7-9 hours of quality sleep and 1-2 rest days per week.",
+        "🛁 Active recovery keeps your forge warm! Try light yoga, walking, or gentle stretching on rest days. It's like maintaining your equipment - essential for peak performance!",
+        "💆 Listen to your body's signals! Soreness is normal, but sharp pain means stop. Ice baths, foam rolling, and proper nutrition accelerate recovery.",
+        "🧘 Mental recovery is just as important! Meditation, stress management, and adequate sleep help your nervous system recover. A calm mind forges better results!"
+      ]
+      return {
+        content: recoveryResponses[Math.floor(Math.random() * recoveryResponses.length)],
+        category: 'recovery'
+      }
+    }
+    
+    // Motivation and general responses
+    const motivationResponses = [
+      "🔥 Every master blacksmith started with their first hammer strike! Your fitness journey is the same - each workout, each healthy meal, each good night's sleep is forging a stronger you!",
+      "⚡ Consistency beats perfection in the forge! Show up every day, even if it's just for 15 minutes. Small daily actions create legendary transformations over time!",
+      "🏆 Your body is your greatest masterpiece! Every rep, every healthy choice, every moment of discipline is adding another layer of strength to your foundation.",
+      "💎 Pressure and heat create diamonds - the same way challenging workouts and discipline create an unstoppable you! What challenge can we tackle together today?",
+      "🌟 Remember: You're not just building muscle, you're forging character! Every time you choose the workout over the couch, you're becoming mentally stronger too!"
+    ]
+    
+    return {
+      content: motivationResponses[Math.floor(Math.random() * motivationResponses.length)],
+      category: 'motivation'
+    }
+  }
+
+  const getCategoryIcon = (category: Message['category']) => {
+    switch (category) {
+      case 'workout': return <Dumbbell className="h-4 w-4" />
+      case 'nutrition': return <ChefHat className="h-4 w-4" />
+      case 'recovery': return <Shield className="h-4 w-4" />
+      case 'motivation': return <Flame className="h-4 w-4" />
+      default: return <Target className="h-4 w-4" />
+    }
+  }
+
+  const getCategoryColor = (category: Message['category']) => {
+    switch (category) {
+      case 'workout': return 'text-red-600 border-red-600'
+      case 'nutrition': return 'text-green-600 border-green-600'
+      case 'recovery': return 'text-blue-600 border-blue-600'
+      case 'motivation': return 'text-orange-600 border-orange-600'
+      default: return 'text-gray-600 border-gray-600'
+    }
+  }
+
+  const quickActions = [
+    { text: "Plan my workout", category: "workout" },
+    { text: "Nutrition advice", category: "nutrition" },
+    { text: "Recovery tips", category: "recovery" },
+    { text: "Need motivation", category: "motivation" }
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-600 via-red-600 to-purple-600 bg-clip-text text-transparent">
+          FitForge AI Coach
+        </h2>
+        <div className="flex items-center space-x-2">
+          <Badge variant="outline" className="text-green-600 border-green-600">
+            <Bot className="h-3 w-3 mr-1" />
+            {aiState.specialization}
+          </Badge>
+          <Badge 
+            variant="outline" 
+            className={aiState.mode === 'trainer' ? 'text-red-600 border-red-600' : 'text-green-600 border-green-600'}
+          >
+            {aiState.mode === 'trainer' ? 'Trainer Mode' : 'Nutritionist Mode'}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Chat Interface */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <MessageCircle className="h-5 w-5 text-blue-600" />
+              <span>Chat with Your AI Coach</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ScrollArea ref={scrollAreaRef} className="h-[400px] pr-4">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`flex items-start space-x-2 max-w-[80%] ${
+                      message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                    }`}>
+                      <div className={`p-2 rounded-full ${
+                        message.type === 'user' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-orange-600 text-white'
+                      }`}>
+                        {message.type === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                      </div>
+                      
+                      <div className={`p-3 rounded-lg ${
+                        message.type === 'user'
+                          ? 'bg-blue-100 text-gray-900'
+                          : 'bg-gray-100 text-gray-900'
+                      }`}>
+                        <div className="text-sm">{message.content}</div>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="text-xs text-gray-500">
+                            {message.timestamp.toLocaleTimeString()}
+                          </div>
+                          {message.category && message.type === 'ai' && (
+                            <Badge variant="outline" className={`text-xs ${getCategoryColor(message.category)}`}>
+                              {getCategoryIcon(message.category)}
+                              <span className="ml-1">{message.category}</span>
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {aiState.isTyping && (
+                  <div className="flex justify-start">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-2 rounded-full bg-orange-600 text-white">
+                        <Bot className="h-4 w-4" />
+                      </div>
+                      <div className="p-3 rounded-lg bg-gray-100">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+
+            <div className="flex space-x-2">
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Ask your AI coach about workouts, nutrition, or motivation..."
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleSendMessage} 
+                disabled={!inputMessage.trim() || aiState.isTyping}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {quickActions.map((action, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setInputMessage(action.text)}
+                  className="text-xs"
+                >
+                  {getCategoryIcon(action.category as Message['category'])}
+                  <span className="ml-1">{action.text}</span>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Coach Status & Features */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Bot className="h-5 w-5 text-orange-600" />
+                <span>Coach Status</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mx-auto mb-3 flex items-center justify-center">
+                  <Bot className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="font-bold text-lg">FitForge AI Coach</h3>
+                <p className="text-sm text-gray-600">Powered by Advanced AI</p>
+              </div>
+
+              <div className="space-y-2">
+                <Button
+                  onClick={() => setAiState(prev => ({ 
+                    ...prev, 
+                    mode: 'trainer',
+                    specialization: 'Personal Trainer'
+                  }))}
+                  variant={aiState.mode === 'trainer' ? 'default' : 'outline'}
+                  className="w-full"
+                >
+                  <Dumbbell className="h-4 w-4 mr-2" />
+                  Trainer Mode
+                </Button>
+                
+                <Button
+                  onClick={() => setAiState(prev => ({ 
+                    ...prev, 
+                    mode: 'nutritionist',
+                    specialization: 'Nutrition Coach'
+                  }))}
+                  variant={aiState.mode === 'nutritionist' ? 'default' : 'outline'}
+                  className="w-full"
+                >
+                  <ChefHat className="h-4 w-4 mr-2" />
+                  Nutrition Mode
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Flame className="h-5 w-5 text-red-600" />
+                <span>Today's Forge Goals</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Workout Complete</span>
+                  <Badge variant="outline" className="text-green-600 border-green-600">
+                    ✓ Done
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center justify-between text-sm">
+                  <span>Protein Goal (165g)</span>
+                  <span className="text-gray-600">145/165g</span>
+                </div>
+                
+                <div className="flex items-center justify-between text-sm">
+                  <span>Water Intake (3L)</span>
+                  <span className="text-gray-600">2.1/3.0L</span>
+                </div>
+                
+                <div className="flex items-center justify-between text-sm">
+                  <span>Steps Goal</span>
+                  <span className="text-gray-600">8,234/10,000</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Zap className="h-5 w-5 text-yellow-600" />
+                <span>Forge Insights</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-sm space-y-2">
+                <div className="p-2 bg-blue-50 rounded border-l-4 border-blue-500">
+                  <div className="font-medium text-blue-800">Peak Performance Time</div>
+                  <div className="text-blue-600">Your best workouts happen at 6-8 AM</div>
+                </div>
+                
+                <div className="p-2 bg-green-50 rounded border-l-4 border-green-500">
+                  <div className="font-medium text-green-800">Nutrition Streak</div>
+                  <div className="text-green-600">5 days of hitting protein goals!</div>
+                </div>
+                
+                <div className="p-2 bg-purple-50 rounded border-l-4 border-purple-500">
+                  <div className="font-medium text-purple-800">Recovery Trend</div>
+                  <div className="text-purple-600">Sleep quality improving by 15%</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
