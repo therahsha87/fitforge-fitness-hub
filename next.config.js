@@ -112,6 +112,16 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
+
+  /** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    appDir: true,
+  },
+  images: {
+    domains: ['placeholder.com'], // Add any image domains you'll use
+  },
+
 }
 
 module.exports = nextConfig
