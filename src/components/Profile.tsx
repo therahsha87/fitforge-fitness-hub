@@ -1,553 +1,383 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { 
-  User, 
-  Settings, 
-  Trophy, 
-  Calendar,
-  TrendingUp,
-  Target,
-  Activity,
-  Edit,
-  Camera,
-  Flame,
-  Zap,
-  Award,
-  BarChart3,
-  Clock,
-  Heart,
-  Dumbbell
-} from 'lucide-react';
+import React, { useState } from 'react'
 
 interface UserStats {
-  level: number;
-  experience: number;
-  maxExperience: number;
-  streak: number;
-  totalWorkouts: number;
-  caloriesBurned: number;
-  achievements: string[];
+  totalWorkouts: number
+  totalCaloriesBurned: number
+  currentStreak: number
+  longestStreak: number
+  totalDistance: number
+  averageWorkoutTime: number
 }
 
 interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  earned: boolean;
-  earnedDate?: Date;
-  progress?: number;
-  maxProgress?: number;
+  id: string
+  title: string
+  description: string
+  icon: string
+  earned: boolean
+  earnedDate?: Date
+  progress?: number
+  maxProgress?: number
 }
 
-interface WorkoutStats {
-  date: string;
-  duration: number;
-  calories: number;
-  exercises: number;
-  type: string;
+interface UserProfile {
+  name: string
+  email: string
+  joinDate: Date
+  profileImage: string
+  age: number
+  weight: number
+  height: number
+  fitnessLevel: 'beginner' | 'intermediate' | 'advanced'
+  goals: string[]
+  preferences: {
+    units: 'metric' | 'imperial'
+    notifications: boolean
+    privacy: 'public' | 'private'
+  }
 }
 
-interface Props {
-  userStats: UserStats;
-}
+const Profile: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'profile' | 'stats' | 'achievements' | 'settings'>('profile')
+  const [isEditing, setIsEditing] = useState<boolean>(false)
 
-const Profile: React.FC<Props> = ({ userStats }) => {
-  const [activeTab, setActiveTab] = useState<string>('overview');
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: 'Alex Champion',
+    email: 'alex@fitforge.com',
+    joinDate: new Date('2024-01-15'),
+    profileImage: '👤',
+    age: 28,
+    weight: 72,
+    height: 175,
+    fitnessLevel: 'intermediate',
+    goals: ['Weight Loss', 'Muscle Building', 'Endurance'],
+    preferences: {
+      units: 'metric',
+      notifications: true,
+      privacy: 'public'
+    }
+  })
+
+  const userStats: UserStats = {
+    totalWorkouts: 127,
+    totalCaloriesBurned: 15420,
+    currentStreak: 15,
+    longestStreak: 23,
+    totalDistance: 245.6,
+    averageWorkoutTime: 42
+  }
 
   const achievements: Achievement[] = [
     {
       id: '1',
-      name: 'First Steps',
+      title: 'First Steps',
       description: 'Complete your first workout',
       icon: '👟',
       earned: true,
-      earnedDate: new Date('2024-01-15'),
+      earnedDate: new Date('2024-01-16')
     },
     {
       id: '2',
-      name: 'Week Warrior',
-      description: 'Maintain a 7-day workout streak',
-      icon: '🔥',
+      title: 'Week Warrior',
+      description: 'Complete 7 workouts in a week',
+      icon: '🗓️',
       earned: true,
-      earnedDate: new Date('2024-02-01'),
+      earnedDate: new Date('2024-01-23')
     },
     {
       id: '3',
-      name: 'Century Club',
-      description: 'Complete 100 total workouts',
-      icon: '💯',
-      earned: false,
-      progress: 89,
-      maxProgress: 100,
+      title: 'Calorie Crusher',
+      description: 'Burn 10,000 total calories',
+      icon: '🔥',
+      earned: true,
+      earnedDate: new Date('2024-02-15')
     },
     {
       id: '4',
-      name: 'Calorie Crusher',
-      description: 'Burn 20,000 total calories',
-      icon: '🔥',
+      title: 'Streak Master',
+      description: 'Maintain a 30-day workout streak',
+      icon: '⚡',
       earned: false,
-      progress: 15420,
-      maxProgress: 20000,
+      progress: 15,
+      maxProgress: 30
     },
     {
       id: '5',
-      name: 'Consistency King',
-      description: 'Workout 30 days in a row',
-      icon: '👑',
+      title: 'Distance Runner',
+      description: 'Run 500km total distance',
+      icon: '🏃‍♂️',
       earned: false,
-      progress: 7,
-      maxProgress: 30,
+      progress: 245,
+      maxProgress: 500
     },
     {
       id: '6',
-      name: 'Muscle Builder',
-      description: 'Complete 50 strength workouts',
+      title: 'Strength Legend',
+      description: 'Complete 100 strength workouts',
       icon: '💪',
       earned: false,
-      progress: 23,
-      maxProgress: 50,
+      progress: 73,
+      maxProgress: 100
     }
-  ];
+  ]
 
-  const recentWorkouts: WorkoutStats[] = [
-    {
-      date: '2024-12-17',
-      duration: 45,
-      calories: 420,
-      exercises: 8,
-      type: 'Upper Body'
-    },
-    {
-      date: '2024-12-16',
-      duration: 30,
-      calories: 280,
-      exercises: 6,
-      type: 'HIIT Cardio'
-    },
-    {
-      date: '2024-12-15',
-      duration: 50,
-      calories: 380,
-      exercises: 10,
-      type: 'Full Body'
-    },
-    {
-      date: '2024-12-14',
-      duration: 25,
-      calories: 220,
-      exercises: 5,
-      type: 'Core'
-    },
-    {
-      date: '2024-12-13',
-      duration: 40,
-      calories: 350,
-      exercises: 9,
-      type: 'Lower Body'
-    }
-  ];
+  const handleProfileUpdate = (): void => {
+    setIsEditing(false)
+    // Here you would typically save to backend
+    console.log('Profile updated:', userProfile)
+  }
 
-  const personalInfo = {
-    name: 'Alex Johnson',
-    email: 'alex.johnson@email.com',
-    age: 28,
-    weight: 70,
-    height: 175,
-    fitnessGoal: 'Build muscle and lose fat',
-    activityLevel: 'Moderately active',
-    joinDate: new Date('2024-01-15'),
-  };
+  const getBMI = (): number => {
+    const heightInMeters = userProfile.height / 100
+    return userProfile.weight / (heightInMeters * heightInMeters)
+  }
 
-  const weeklyStats = {
-    totalWorkouts: 5,
-    totalDuration: 190,
-    totalCalories: 1650,
-    averageWorkout: 38,
-    bestDay: 'Monday',
-  };
+  const getBMICategory = (): { category: string; color: string } => {
+    const bmi = getBMI()
+    if (bmi < 18.5) return { category: 'Underweight', color: 'text-blue-400' }
+    if (bmi < 25) return { category: 'Normal', color: 'text-green-400' }
+    if (bmi < 30) return { category: 'Overweight', color: 'text-yellow-400' }
+    return { category: 'Obese', color: 'text-red-400' }
+  }
 
-  const getAchievementProgress = (achievement: Achievement): number => {
-    if (achievement.earned) return 100;
-    if (!achievement.progress || !achievement.maxProgress) return 0;
-    return (achievement.progress / achievement.maxProgress) * 100;
-  };
-
-  const formatDate = (date: Date): string => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }).format(date);
-  };
-
-  const getMembershipDuration = (): string => {
-    const now = new Date();
-    const joinDate = personalInfo.joinDate;
-    const diffTime = Math.abs(now.getTime() - joinDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 30) {
-      return `${diffDays} days`;
-    } else if (diffDays < 365) {
-      return `${Math.floor(diffDays / 30)} months`;
-    } else {
-      return `${Math.floor(diffDays / 365)} years`;
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Profile Header */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
-            <div className="relative">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src="/placeholder-avatar.jpg" />
-                <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-2xl">
-                  AJ
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                size="sm"
-                variant="outline"
-                className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
+  const renderTabContent = (): JSX.Element => {
+    switch (activeTab) {
+      case 'profile':
+        return (
+          <div className="space-y-6">
+            {/* Profile Header */}
+            <div className="flex items-center space-x-6">
+              <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-4xl">
+                {userProfile.profileImage}
+              </div>
+              <div className="flex-1">
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={userProfile.name}
+                    onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))}
+                    className="text-2xl font-bold bg-gray-800 border border-purple-500/30 rounded px-3 py-1 text-white mb-2 w-full"
+                  />
+                ) : (
+                  <h2 className="text-2xl font-bold text-white mb-2">{userProfile.name}</h2>
+                )}
+                <p className="text-gray-400">{userProfile.email}</p>
+                <p className="text-sm text-gray-500">
+                  Member since {userProfile.joinDate.toLocaleDateString()}
+                </p>
+              </div>
+              <button
+                onClick={() => isEditing ? handleProfileUpdate() : setIsEditing(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
               >
-                <Camera className="w-4 h-4" />
-              </Button>
+                {isEditing ? 'Save' : 'Edit Profile'}
+              </button>
             </div>
-            
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+
+            {/* Basic Info */}
+            <div className="bg-purple-500/10 rounded-lg p-6 border border-purple-500/20">
+              <h3 className="text-lg font-semibold text-white mb-4">Basic Information</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold">{personalInfo.name}</h1>
-                  <p className="text-gray-600">{personalInfo.email}</p>
-                  <div className="flex items-center justify-center md:justify-start space-x-4 mt-2 text-sm text-gray-500">
-                    <span>Member for {getMembershipDuration()}</span>
-                    <span>•</span>
-                    <span>Level {userStats.level}</span>
-                  </div>
+                  <label className="block text-sm text-gray-400 mb-1">Age</label>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={userProfile.age}
+                      onChange={(e) => setUserProfile(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
+                      className="w-full p-2 bg-gray-800 border border-purple-500/30 rounded text-white"
+                    />
+                  ) : (
+                    <p className="text-white font-medium">{userProfile.age} years</p>
+                  )}
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="mt-4 md:mt-0"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </Button>
-              </div>
-              
-              {/* Level Progress */}
-              <div className="mt-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span>Level {userStats.level} Progress</span>
-                  <span>{userStats.experience} / {userStats.maxExperience} XP</span>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Weight</label>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={userProfile.weight}
+                      onChange={(e) => setUserProfile(prev => ({ ...prev, weight: parseInt(e.target.value) || 0 }))}
+                      className="w-full p-2 bg-gray-800 border border-purple-500/30 rounded text-white"
+                    />
+                  ) : (
+                    <p className="text-white font-medium">{userProfile.weight} kg</p>
+                  )}
                 </div>
-                <Progress value={(userStats.experience / userStats.maxExperience) * 100} className="h-2" />
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Height</label>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={userProfile.height}
+                      onChange={(e) => setUserProfile(prev => ({ ...prev, height: parseInt(e.target.value) || 0 }))}
+                      className="w-full p-2 bg-gray-800 border border-purple-500/30 rounded text-white"
+                    />
+                  ) : (
+                    <p className="text-white font-medium">{userProfile.height} cm</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Fitness Level</label>
+                  {isEditing ? (
+                    <select
+                      value={userProfile.fitnessLevel}
+                      onChange={(e) => setUserProfile(prev => ({ ...prev, fitnessLevel: e.target.value as 'beginner' | 'intermediate' | 'advanced' }))}
+                      className="w-full p-2 bg-gray-800 border border-purple-500/30 rounded text-white"
+                    >
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                  ) : (
+                    <p className="text-white font-medium capitalize">{userProfile.fitnessLevel}</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Flame className="w-8 h-8 mx-auto text-orange-600 mb-2" />
-            <h3 className="text-2xl font-bold">{userStats.streak}</h3>
-            <p className="text-sm text-gray-600">Day Streak</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Activity className="w-8 h-8 mx-auto text-blue-600 mb-2" />
-            <h3 className="text-2xl font-bold">{userStats.totalWorkouts}</h3>
-            <p className="text-sm text-gray-600">Total Workouts</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Zap className="w-8 h-8 mx-auto text-yellow-600 mb-2" />
-            <h3 className="text-2xl font-bold">{userStats.caloriesBurned.toLocaleString()}</h3>
-            <p className="text-sm text-gray-600">Calories Burned</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Trophy className="w-8 h-8 mx-auto text-purple-600 mb-2" />
-            <h3 className="text-2xl font-bold">{achievements.filter(a => a.earned).length}</h3>
-            <p className="text-sm text-gray-600">Achievements</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* This Week's Performance */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="w-6 h-6 text-blue-600" />
-                <span>This Week's Performance</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-5 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{weeklyStats.totalWorkouts}</div>
-                  <div className="text-sm text-gray-600">Workouts</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{weeklyStats.totalDuration}m</div>
-                  <div className="text-sm text-gray-600">Total Time</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{weeklyStats.totalCalories}</div>
-                  <div className="text-sm text-gray-600">Calories</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{weeklyStats.averageWorkout}m</div>
-                  <div className="text-sm text-gray-600">Avg Workout</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{weeklyStats.bestDay}</div>
-                  <div className="text-sm text-gray-600">Best Day</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Workouts */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="w-6 h-6 text-green-600" />
-                <span>Recent Workouts</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentWorkouts.map((workout, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                        <Dumbbell className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-semibold">{workout.type}</p>
-                        <p className="text-sm text-gray-600">{formatDate(new Date(workout.date))}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center space-x-4 text-sm">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="w-4 h-4 text-gray-400" />
-                          <span>{workout.duration}m</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Flame className="w-4 h-4 text-orange-400" />
-                          <span>{workout.calories}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Target className="w-4 h-4 text-blue-400" />
-                          <span>{workout.exercises}</span>
-                        </div>
-                      </div>
-                    </div>
+            {/* Health Metrics */}
+            <div className="bg-purple-500/10 rounded-lg p-6 border border-purple-500/20">
+              <h3 className="text-lg font-semibold text-white mb-4">Health Metrics</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-400">BMI</span>
+                    <span className="text-white font-bold">{getBMI().toFixed(1)}</span>
                   </div>
-                ))}
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-green-500 to-yellow-500 h-2 rounded-full"
+                      style={{ width: `${Math.min((getBMI() / 30) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                  <p className={`text-sm mt-1 ${getBMICategory().color}`}>
+                    {getBMICategory().category}
+                  </p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        {/* Achievements Tab */}
-        <TabsContent value="achievements" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Trophy className="w-6 h-6 text-yellow-600" />
-                <span>Achievements</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                {achievements.map((achievement) => (
-                  <div 
-                    key={achievement.id}
-                    className={`p-4 rounded-lg border ${
-                      achievement.earned 
-                        ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200' 
-                        : 'bg-gray-50 border-gray-200'
-                    }`}
+            {/* Goals */}
+            <div className="bg-purple-500/10 rounded-lg p-6 border border-purple-500/20">
+              <h3 className="text-lg font-semibold text-white mb-4">Fitness Goals</h3>
+              <div className="flex flex-wrap gap-2">
+                {userProfile.goals.map((goal, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-purple-600 text-white rounded-full text-sm"
                   >
-                    <div className="flex items-start space-x-3">
-                      <div className="text-3xl">{achievement.icon}</div>
-                      <div className="flex-1">
-                        <h3 className={`font-semibold ${achievement.earned ? 'text-yellow-800' : 'text-gray-700'}`}>
-                          {achievement.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-2">{achievement.description}</p>
-                        
-                        {achievement.earned ? (
-                          <div className="flex items-center space-x-2">
-                            <Badge className="bg-yellow-100 text-yellow-800">
-                              Earned {formatDate(achievement.earnedDate!)}
-                            </Badge>
-                          </div>
-                        ) : (
-                          <div>
-                            <div className="flex justify-between text-xs mb-1">
-                              <span>Progress</span>
-                              <span>
-                                {achievement.progress} / {achievement.maxProgress}
-                              </span>
-                            </div>
-                            <Progress 
-                              value={getAchievementProgress(achievement)} 
-                              className="h-2" 
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                    {goal}
+                  </span>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Workout Frequency</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span>This Week</span>
-                    <span className="font-bold">5 workouts</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Last Week</span>
-                    <span className="font-bold">4 workouts</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Average per Week</span>
-                    <span className="font-bold">4.2 workouts</span>
-                  </div>
-                  <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-700">
-                      📈 You're 25% more active this week!
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Records</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span>Longest Workout</span>
-                    <Badge variant="secondary">65 minutes</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Most Calories Burned</span>
-                    <Badge variant="secondary">520 kcal</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Best Streak</span>
-                    <Badge variant="secondary">12 days</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Favorite Workout</span>
-                    <Badge variant="secondary">Upper Body</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            </div>
           </div>
-        </TabsContent>
+        )
 
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="w-6 h-6 text-gray-600" />
-                <span>Personal Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Name</label>
-                  <Input value={personalInfo.name} readOnly={!isEditing} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <Input value={personalInfo.email} readOnly={!isEditing} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Age</label>
-                  <Input value={personalInfo.age} readOnly={!isEditing} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Weight (kg)</label>
-                  <Input value={personalInfo.weight} readOnly={!isEditing} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Height (cm)</label>
-                  <Input value={personalInfo.height} readOnly={!isEditing} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Fitness Goal</label>
-                  <Input value={personalInfo.fitnessGoal} readOnly={!isEditing} />
+      case 'stats':
+        return (
+          <div className="space-y-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20 text-center">
+                <div className="text-2xl mb-2">🏋️‍♂️</div>
+                <div className="text-2xl font-bold text-white">{userStats.totalWorkouts}</div>
+                <div className="text-sm text-gray-400">Total Workouts</div>
+              </div>
+              <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20 text-center">
+                <div className="text-2xl mb-2">🔥</div>
+                <div className="text-2xl font-bold text-white">{userStats.totalCaloriesBurned.toLocaleString()}</div>
+                <div className="text-sm text-gray-400">Calories Burned</div>
+              </div>
+              <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20 text-center">
+                <div className="text-2xl mb-2">⚡</div>
+                <div className="text-2xl font-bold text-white">{userStats.currentStreak}</div>
+                <div className="text-sm text-gray-400">Current Streak</div>
+              </div>
+              <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20 text-center">
+                <div className="text-2xl mb-2">🏆</div>
+                <div className="text-2xl font-bold text-white">{userStats.longestStreak}</div>
+                <div className="text-sm text-gray-400">Longest Streak</div>
+              </div>
+              <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20 text-center">
+                <div className="text-2xl mb-2">🏃‍♂️</div>
+                <div className="text-2xl font-bold text-white">{userStats.totalDistance}</div>
+                <div className="text-sm text-gray-400">Distance (km)</div>
+              </div>
+              <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20 text-center">
+                <div className="text-2xl mb-2">⏱️</div>
+                <div className="text-2xl font-bold text-white">{userStats.averageWorkoutTime}</div>
+                <div className="text-sm text-gray-400">Avg Time (min)</div>
+              </div>
+            </div>
+
+            {/* Progress Chart Placeholder */}
+            <div className="bg-purple-500/10 rounded-lg p-6 border border-purple-500/20">
+              <h3 className="text-lg font-semibold text-white mb-4">Progress Over Time</h3>
+              <div className="h-64 bg-purple-500/5 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">📈</div>
+                  <p className="text-gray-400">Progress charts coming soon</p>
                 </div>
               </div>
-              
-              {isEditing && (
-                <div className="flex space-x-2 mt-4">
-                  <Button>Save Changes</Button>
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
+            </div>
+          </div>
+        )
 
-export default Profile;
+      case 'achievements':
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {achievements.map(achievement => (
+                <div
+                  key={achievement.id}
+                  className={`rounded-lg p-6 border transition-colors ${
+                    achievement.earned
+                      ? 'bg-green-500/10 border-green-500/30'
+                      : 'bg-purple-500/10 border-purple-500/20'
+                  }`}
+                >
+                  <div className="flex items-start space-x-4">
+                    <div className={`text-3xl ${achievement.earned ? 'grayscale-0' : 'grayscale'}`}>
+                      {achievement.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className={`font-bold mb-2 ${
+                        achievement.earned ? 'text-green-300' : 'text-white'
+                      }`}>
+                        {achievement.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-3">{achievement.description}</p>
+                      
+                      {achievement.earned ? (
+                        <div className="text-green-400 text-sm">
+                          ✅ Earned on {achievement.earnedDate?.toLocaleDateString()}
+                        </div>
+                      ) : achievement.progress !== undefined && achievement.maxProgress !== undefined ? (
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm text-gray-400">Progress</span>
+                            <span className="text-sm text-white">
+                              {achievement.progress}/{achievement.maxProgress}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-700 rounded-full h-2">
+                            <div
+                              className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full"
+                              style={{ width: `${(achievement.progress / achievement.maxProgress) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-500 text-sm">🔒 Locked</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
