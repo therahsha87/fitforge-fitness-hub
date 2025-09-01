@@ -1,0 +1,231 @@
+name: 🔥 FitForge CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Code Quality and Testing
+  quality:
+    name: 🔍 Code Quality & Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install dependencies
+      run: npm ci
+
+    - name: 🔍 ESLint check
+      run: npm run lint
+
+    - name: 🎨 Prettier check
+      run: npm run format:check
+
+    - name: 📝 TypeScript check
+      run: npm run type-check
+
+    - name: 🧪 Run tests
+      run: npm run test:coverage
+      env:
+        NODE_ENV: test
+
+    - name: 📊 Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: success()
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: fitforge-coverage
+
+  # Build and Security Scan
+  build:
+    name: 🏗️ Build & Security
+    runs-on: ubuntu-latest
+    needs: quality
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install dependencies
+      run: npm ci
+
+    - name: 🏗️ Build application
+      run: npm run build
+      env:
+        NODE_ENV: production
+        NEXT_TELEMETRY_DISABLED: 1
+
+    - name: 🔒 Run security audit
+      run: npm audit --audit-level=high
+      continue-on-error: true
+
+    - name: 🛡️ Dependency vulnerability scan
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    - run: npm install -g audit-ci
+    - run: audit-ci --config audit-ci.json
+      continue-on-error: true
+
+    - name: 📤 Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-files
+        path: .next
+        retention-days: 1
+
+  # Docker Build and Push
+  docker:
+    name: 🐳 Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: [quality, build]
+    if: github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔑 Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 📋 Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: 🏗️ Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  # Deployment to Vercel (Production)
+  deploy-vercel:
+    name: 🚀 Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [quality, build]
+    if: github.ref == 'refs/heads/main'
+    
+    environment:
+      name: production
+      url: ${{ steps.deployment.outputs.url }}
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🚀 Deploy to Vercel
+      id: deployment
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        vercel-args: '--prod'
+        working-directory: ./
+
+    - name: 📊 Update deployment status
+      if: always()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const deployment_id = '${{ steps.deployment.outputs.deployment-id }}'
+          const deployment_url = '${{ steps.deployment.outputs.preview-url }}'
+          
+          console.log('Deployment ID:', deployment_id)
+          console.log('Deployment URL:', deployment_url)
+
+  # Health Check Post-Deployment
+  health-check:
+    name: 🩺 Health Check
+    runs-on: ubuntu-latest
+    needs: deploy-vercel
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 🔍 Wait for deployment
+      run: sleep 30
+
+    - name: 🩺 Health check
+      run: |
+        response=$(curl -s -o /dev/null -w "%{http_code}" https://your-domain.vercel.app/api/health)
+        if [ $response -eq 200 ]; then
+          echo "✅ Health check passed"
+        else
+          echo "❌ Health check failed with status $response"
+          exit 1
+        fi
+
+    - name: 📊 Performance audit with Lighthouse
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        urls: |
+          https://your-domain.vercel.app
+        configPath: './.lighthouserc.json'
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+
+  # Notification
+  notify:
+    name: 📢 Notifications
+    runs-on: ubuntu-latest
+    needs: [quality, build, docker, deploy-vercel, health-check]
+    if: always() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📢 Notify deployment success
+      if: needs.deploy-vercel.result == 'success' && needs.health-check.result == 'success'
+      run: |
+        echo "🎉 FitForge Fitness Hub successfully deployed!"
+        echo "🔥 Ready to forge some fitness journeys!"
+        
+    - name: 🚨 Notify deployment failure
+      if: needs.deploy-vercel.result == 'failure' || needs.health-check.result == 'failure'
+      run: |
+        echo "❌ Deployment failed - check the logs"
+        echo "🔧 The forge needs some maintenance..."
